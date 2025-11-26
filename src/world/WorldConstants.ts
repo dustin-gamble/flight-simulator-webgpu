@@ -301,6 +301,12 @@ export const DEBUG_CONFIG = {
 
     /** Freeze terrain updates */
     FREEZE_UPDATES: false,
+
+    /** Disable vegetation rendering (debug) */
+    DISABLE_VEGETATION: false,
+
+    /** Disable grass rendering (debug) */
+    DISABLE_GRASS: true,
 } as const;
 
 // Coordinate system utilities
