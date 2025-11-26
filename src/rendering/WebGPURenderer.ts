@@ -20,6 +20,7 @@ import { GrassOverlayRenderer } from './GrassOverlayRenderer';
 import type { VegetationPlacement } from '../world/VegetationSystem';
 import { GrassDistribution } from '../world/GrassDistribution';
 import type { GrassCluster } from '../world/GrassDistribution';
+import { DEBUG_CONFIG } from '../world/WorldConstants';
 
 export interface WebGPURenderingCapabilities {
     maxTextureSize: number;
@@ -297,16 +298,20 @@ export class WebGPURenderer {
             this.simpleWaterRenderer = new SimpleWaterRenderer(this.device);
             await this.simpleWaterRenderer.initialize();
 
-            this.simpleVegetationRenderer = new SimpleVegetationRenderer(this.device);
-            this.simpleVegetationRenderer.setColorFormat(this.colorFormat);
-            this.simpleVegetationRenderer.setSampleCount(this.qualitySettings.msaaSamples);
-            await this.simpleVegetationRenderer.initialize();
+            if (!DEBUG_CONFIG.DISABLE_VEGETATION) {
+                this.simpleVegetationRenderer = new SimpleVegetationRenderer(this.device);
+                this.simpleVegetationRenderer.setColorFormat(this.colorFormat);
+                this.simpleVegetationRenderer.setSampleCount(this.qualitySettings.msaaSamples);
+                await this.simpleVegetationRenderer.initialize();
+            }
 
             // Initialize simple grass renderer
-            this.simpleGrassRenderer = new SimpleGrassRenderer(this.device);
-            this.simpleGrassRenderer.setColorFormat(this.colorFormat);
-            this.simpleGrassRenderer.setSampleCount(this.qualitySettings.msaaSamples);
-            await this.simpleGrassRenderer.initialize();
+            if (!DEBUG_CONFIG.DISABLE_GRASS) {
+                this.simpleGrassRenderer = new SimpleGrassRenderer(this.device);
+                this.simpleGrassRenderer.setColorFormat(this.colorFormat);
+                this.simpleGrassRenderer.setSampleCount(this.qualitySettings.msaaSamples);
+                await this.simpleGrassRenderer.initialize();
+            }
 
             console.log('WebGPURenderer: Using simplified renderers for stability');
         } else {
