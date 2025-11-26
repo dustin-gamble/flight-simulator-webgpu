@@ -242,8 +242,8 @@ export class SimpleGrassRenderer {
                 grassColor += vec3<f32>(variation * 0.1, variation * 0.2, variation * 0.05);
                 
                 // Make grass tips lighter/yellower
-                let heightFactor = input.position.y / 3.0; // Assuming max height is 3
-                grassColor = mix(grassColor, grassColor + vec3<f32>(0.2, 0.3, 0.0), heightFactor * 0.3);
+                let tipFactor = input.position.y / 3.0; // Assuming max height is 3
+                grassColor = mix(grassColor, grassColor + vec3<f32>(0.2, 0.3, 0.0), tipFactor * 0.3);
                 
                 output.color = grassColor;
                 output.alpha = 0.85;
