@@ -234,9 +234,6 @@ export class PhotorealisticHeightmapGenerator {
             elevation = -oceanDepth * 200; // Ocean depths up to -200m
         }
 
-        // DEBUG: Force visible elevation to ensure terrain is not flat
-        elevation = elevation * 5 + 500; // DEBUG: Force visible elevation
-
         // Clamp to realistic values with strict sea level adherence
         return Math.max(-500, Math.min(15000, elevation)); // Increased max to 15000 for debug
     }
