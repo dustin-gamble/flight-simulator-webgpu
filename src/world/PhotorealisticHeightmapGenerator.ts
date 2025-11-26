@@ -1,5 +1,5 @@
 import { Vector3 } from '../core/math';
-import { TERRAIN_CONFIG } from './WorldConstants';
+import { TERRAIN_CONFIG, DEBUG_CONFIG } from './WorldConstants';
 import type { TerrainData } from './TerrainTile';
 
 /**
@@ -135,25 +135,32 @@ export class PhotorealisticHeightmapGenerator {
             }
         }
 
-        // Debug logging for heightmap generation
-        const avgElevation = totalElevation / (size * size);
-        console.log('PhotorealisticHeightmapGenerator.generateHeightmap DEBUG:');
-        console.log(`  World coordinates: (${worldX}, ${worldZ})`);
-        console.log(`  Size: ${size}x${size}, Step: ${step}`);
-        console.log(`  Elevation range: [${minElevation.toFixed(2)}, ${maxElevation.toFixed(2)}]`);
-        console.log(`  Average elevation: ${avgElevation.toFixed(2)}`);
-        console.log(
-            `  Non-zero values: ${nonZeroCount}/${size * size} (${((nonZeroCount / (size * size)) * 100).toFixed(1)}%)`
-        );
-        console.log(
-            `  Sample values: [${heightmap[0].toFixed(2)}, ${heightmap[Math.floor((size * size) / 2)].toFixed(2)}, ${heightmap[size * size - 1].toFixed(2)}]`
-        );
+        // Debug logging for heightmap generation (gated)
+        if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+            const avgElevation = totalElevation / (size * size);
+            console.log('PhotorealisticHeightmapGenerator.generateHeightmap DEBUG:');
+            console.log(`  World coordinates: (${worldX}, ${worldZ})`);
+            console.log(`  Size: ${size}x${size}, Step: ${step}`);
+            console.log(
+                `  Elevation range: [${minElevation.toFixed(2)}, ${maxElevation.toFixed(2)}]`
+            );
+            console.log(`  Average elevation: ${avgElevation.toFixed(2)}`);
+            console.log(
+                `  Non-zero values: ${nonZeroCount}/${size * size} (${((nonZeroCount / (size * size)) * 100).toFixed(1)}%)`
+            );
+            console.log(
+                `  Sample values: [${heightmap[0].toFixed(2)}, ${heightmap[Math.floor((size * size) / 2)].toFixed(2)}, ${heightmap[size * size - 1].toFixed(2)}]`
+            );
+        }
     }
 
     /**
      * DEBUG: Test terrain generation with known coordinates
      */
     public debugTerrainGeneration(): void {
+        if (!DEBUG_CONFIG.VERBOSE_LOGGING) {
+            return;
+        }
         console.log('PhotorealisticHeightmapGenerator DEBUG TEST:');
         const testCoords = [
             { x: 0, z: 0 },

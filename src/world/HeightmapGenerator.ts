@@ -1,5 +1,5 @@
 import { Vector3 } from '../core/math';
-import { NOISE_CONFIG, TERRAIN_CONFIG, BIOME_CONFIG } from './WorldConstants';
+import { NOISE_CONFIG, TERRAIN_CONFIG, BIOME_CONFIG, DEBUG_CONFIG } from './WorldConstants';
 import type { TerrainData } from './TerrainTile';
 
 /**
@@ -159,6 +159,7 @@ export class HeightmapGenerator {
     ): void {
         const octaves = NOISE_CONFIG.TERRAIN_OCTAVES;
 
+        let invalidCount = 0;
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 const wx = worldX + j * step;
@@ -200,7 +201,7 @@ export class HeightmapGenerator {
 
                 // Validate elevation to prevent NaN propagation and clamp extreme values
                 if (!isFinite(elevation)) {
-                    console.warn(`Invalid elevation detected at (${wx}, ${wz}): ${elevation}`);
+                    invalidCount++;
                     elevation = 0; // Default to sea level
                 }
 
@@ -209,6 +210,11 @@ export class HeightmapGenerator {
 
                 heightmap[index] = elevation;
             }
+        }
+
+        // Optionally report invalid samples once per tile
+        if (invalidCount > 0 && DEBUG_CONFIG.VERBOSE_LOGGING) {
+            console.warn(`HeightmapGenerator: corrected ${invalidCount} invalid elevation samples`);
         }
 
         // Post-process for water body detection and shore smoothing

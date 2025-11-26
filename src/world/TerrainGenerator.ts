@@ -5,6 +5,7 @@ import {
     PERFORMANCE_CONFIG,
     worldToTileCoord,
     getTileSizeForLOD,
+    DEBUG_CONFIG,
 } from './WorldConstants';
 import { TerrainTile, TerrainTileState } from './TerrainTile';
 import { TerrainStreaming, TilePriority } from './TerrainStreaming';
@@ -163,8 +164,10 @@ export class TerrainGenerator {
         this.heightmapGenerator = new PhotorealisticHeightmapGenerator(this.config.seed);
         this.streaming = new TerrainStreaming(this.config.seed);
 
-        // DEBUG: Test heightmap generation
-        this.heightmapGenerator.debugTerrainGeneration();
+        // DEBUG: Test heightmap generation (gated)
+        if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+            this.heightmapGenerator.debugTerrainGeneration();
+        }
 
         // Initialize with a smaller grid for better performance
         // Create a 3x3 grid of root tiles
@@ -185,21 +188,29 @@ export class TerrainGenerator {
                 this.quadTree.children.push(node);
 
                 // Log tile bounds to debug positioning
-                console.log(
-                    `Tile (${x},${z}) bounds: X[${tile.worldBounds.minX}, ${tile.worldBounds.maxX}] Z[${tile.worldBounds.minZ}, ${tile.worldBounds.maxZ}]`
-                );
+                if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+                    console.log(
+                        `Tile (${x},${z}) bounds: X[${tile.worldBounds.minX}, ${tile.worldBounds.maxX}] Z[${tile.worldBounds.minZ}, ${tile.worldBounds.maxZ}]`
+                    );
+                }
 
                 // Update LOD properly with initial camera position
                 const initialCameraPos = new Vector3(4096, 500, 4096);
                 tile.updateLOD(initialCameraPos, null);
-                console.log(
-                    `Tile (${x},${z}) distance to camera: ${tile.distanceToCamera.toFixed(0)}`
-                );
+                if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+                    console.log(
+                        `Tile (${x},${z}) distance to camera: ${tile.distanceToCamera.toFixed(0)}`
+                    );
+                }
 
                 // Request generation for all tiles in the initial grid
-                console.log('TerrainGenerator: Requesting tile generation for', tile.id);
+                if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+                    console.log('TerrainGenerator: Requesting tile generation for', tile.id);
+                }
                 this.streaming.requestTile(tile, TilePriority.IMMEDIATE, (loadedTile) => {
-                    console.log('Tile loaded:', loadedTile.id, 'state:', loadedTile.state);
+                    if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+                        console.log('Tile loaded:', loadedTile.id, 'state:', loadedTile.state);
+                    }
                 });
             }
         }
@@ -220,7 +231,7 @@ export class TerrainGenerator {
         this.currentFrame++;
 
         // Debug logging
-        if (this.currentFrame % 60 === 0) {
+        if (DEBUG_CONFIG.VERBOSE_LOGGING && this.currentFrame % 60 === 0) {
             console.log(
                 'TerrainGenerator.update - Frame:',
                 this.currentFrame,
@@ -246,7 +257,7 @@ export class TerrainGenerator {
         // Update visible nodes
         this.updateVisibility();
 
-        if (this.currentFrame % 60 === 0) {
+        if (DEBUG_CONFIG.VERBOSE_LOGGING && this.currentFrame % 60 === 0) {
             console.log(
                 'Visible nodes:',
                 this.visibleNodes.length,
@@ -277,7 +288,7 @@ export class TerrainGenerator {
             .map((node) => node.tile);
 
         // Debug logging
-        if (this.currentFrame % 60 === 0 && readyTiles.length > 0) {
+        if (DEBUG_CONFIG.VERBOSE_LOGGING && this.currentFrame % 60 === 0 && readyTiles.length > 0) {
             console.log('Renderable tiles:', readyTiles.length);
         }
 
@@ -445,20 +456,24 @@ export class TerrainGenerator {
             tile.distanceToCamera < 500000 // Increased from 50000
         ) {
             const priority = this.calculateTilePriority(tile);
-            console.log(
-                'Requesting tile:',
-                tile.id,
-                'priority:',
-                priority,
-                'distance:',
-                tile.distanceToCamera.toFixed(0),
-                'state:',
-                tile.state
-            );
+            if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+                console.log(
+                    'Requesting tile:',
+                    tile.id,
+                    'priority:',
+                    priority,
+                    'distance:',
+                    tile.distanceToCamera.toFixed(0),
+                    'state:',
+                    tile.state
+                );
+            }
 
             this.streaming.requestTile(tile, priority, (loadedTile) => {
                 node.lastUpdateFrame = this.currentFrame;
-                console.log('Tile loaded callback:', loadedTile.id, 'state:', loadedTile.state);
+                if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+                    console.log('Tile loaded callback:', loadedTile.id, 'state:', loadedTile.state);
+                }
             });
         }
     }
@@ -562,7 +577,7 @@ export class TerrainGenerator {
 
             if (tile.isReadyForRender()) {
                 this.renderableNodes.push(node);
-            } else if (this.currentFrame % 60 === 0) {
+            } else if (DEBUG_CONFIG.VERBOSE_LOGGING && this.currentFrame % 60 === 0) {
                 console.log(
                     'Tile not ready:',
                     tile.id,

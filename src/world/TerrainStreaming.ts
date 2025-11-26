@@ -5,6 +5,7 @@ import {
     worldToTileCoord,
     getTileSizeForLOD,
     getMeshResolutionForLOD,
+    DEBUG_CONFIG,
 } from './WorldConstants';
 import { TerrainTile, TerrainTileState, type TerrainData } from './TerrainTile';
 import { PhotorealisticHeightmapGenerator } from './PhotorealisticHeightmapGenerator';
@@ -245,7 +246,11 @@ export class TerrainStreaming {
         if (!existing || priority < existing.priority) {
             this.requestQueue.set(tileId, request);
             // Only log if queue is getting large
-            if (this.requestQueue.size > 50 && this.requestQueue.size % 50 === 0) {
+            if (
+                DEBUG_CONFIG.VERBOSE_LOGGING &&
+                this.requestQueue.size > 50 &&
+                this.requestQueue.size % 50 === 0
+            ) {
                 console.log('Request queue size:', this.requestQueue.size);
             }
         }
@@ -500,7 +505,7 @@ export class TerrainStreaming {
             processed++;
         }
 
-        if (processed > 0 && this.frameCount % 60 === 0) {
+        if (DEBUG_CONFIG.VERBOSE_LOGGING && processed > 0 && this.frameCount % 60 === 0) {
             console.log(`Processing ${processed} terrain tile requests`);
         }
     }
@@ -510,15 +515,17 @@ export class TerrainStreaming {
         tile.state = TerrainTileState.GENERATING;
 
         // Generate terrain data inline (simulated worker is broken)
-        console.log(
-            'Generating terrain data for tile:',
-            tile.id,
-            'at',
-            tile.x,
-            tile.z,
-            'level',
-            tile.level
-        );
+        if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+            console.log(
+                'Generating terrain data for tile:',
+                tile.id,
+                'at',
+                tile.x,
+                tile.z,
+                'level',
+                tile.level
+            );
+        }
 
         try {
             // Generate the terrain data
@@ -555,7 +562,9 @@ export class TerrainStreaming {
         tile.setTerrainData(convertedData);
         tile.state = TerrainTileState.LOADED;
 
-        console.log('Terrain data set for tile:', tile.id, 'generating mesh...');
+        if (DEBUG_CONFIG.VERBOSE_LOGGING) {
+            console.log('Terrain data set for tile:', tile.id, 'generating mesh...');
+        }
 
         // Generate mesh
         this.generateMeshAsync(tile);
@@ -612,7 +621,7 @@ export class TerrainStreaming {
         tile.setMeshData(meshData);
         this.stats.generatedThisFrame++;
 
-        if (this.frameCount % 60 === 0) {
+        if (DEBUG_CONFIG.VERBOSE_LOGGING && this.frameCount % 60 === 0) {
             console.log(
                 'TerrainStreaming: Generated mesh for tile',
                 tile.id,
