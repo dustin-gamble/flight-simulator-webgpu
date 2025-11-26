@@ -298,10 +298,14 @@ export class WebGPURenderer {
             await this.simpleWaterRenderer.initialize();
 
             this.simpleVegetationRenderer = new SimpleVegetationRenderer(this.device);
+            this.simpleVegetationRenderer.setColorFormat(this.colorFormat);
+            this.simpleVegetationRenderer.setSampleCount(this.qualitySettings.msaaSamples);
             await this.simpleVegetationRenderer.initialize();
 
             // Initialize simple grass renderer
             this.simpleGrassRenderer = new SimpleGrassRenderer(this.device);
+            this.simpleGrassRenderer.setColorFormat(this.colorFormat);
+            this.simpleGrassRenderer.setSampleCount(this.qualitySettings.msaaSamples);
             await this.simpleGrassRenderer.initialize();
 
             console.log('WebGPURenderer: Using simplified renderers for stability');
@@ -1179,6 +1183,15 @@ export class WebGPURenderer {
             this.msaaDepthTexture = null;
             this.msaaDepthTextureView = null;
             console.log('MSAA disabled - using 1x sampling');
+            // Inform simple renderers of updated sample count
+            if (this.simpleVegetationRenderer) {
+                this.simpleVegetationRenderer.setSampleCount(this.qualitySettings.msaaSamples);
+                this.simpleVegetationRenderer.setColorFormat(this.colorFormat);
+            }
+            if (this.simpleGrassRenderer) {
+                this.simpleGrassRenderer.setSampleCount(this.qualitySettings.msaaSamples);
+                this.simpleGrassRenderer.setColorFormat(this.colorFormat);
+            }
             return;
         }
 
@@ -1217,6 +1230,16 @@ export class WebGPURenderer {
         // Update terrain renderer sample count
         if (this.terrainRenderer) {
             this.terrainRenderer.setSampleCount(sampleCount);
+        }
+
+        // Inform simple renderers of updated sample count/format
+        if (this.simpleVegetationRenderer) {
+            this.simpleVegetationRenderer.setSampleCount(this.qualitySettings.msaaSamples);
+            this.simpleVegetationRenderer.setColorFormat(this.colorFormat);
+        }
+        if (this.simpleGrassRenderer) {
+            this.simpleGrassRenderer.setSampleCount(this.qualitySettings.msaaSamples);
+            this.simpleGrassRenderer.setColorFormat(this.colorFormat);
         }
     }
 

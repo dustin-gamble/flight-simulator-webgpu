@@ -15,6 +15,10 @@ interface GrassInstance {
 export class SimpleGrassRenderer {
     private device: GPUDevice;
     private pipeline: GPURenderPipeline | null = null;
+    private sampleCount: number = 1;
+    private colorFormat: GPUTextureFormat = (navigator.gpu
+        ? navigator.gpu.getPreferredCanvasFormat()
+        : 'rgba8unorm') as GPUTextureFormat;
     private bindGroupLayout: GPUBindGroupLayout;
     private uniformBuffer: GPUBuffer;
     private grassGeometry: {
@@ -63,6 +67,33 @@ export class SimpleGrassRenderer {
         // Create grass geometry
         this.createGrassGeometry();
 
+        // Build pipeline with current format/sample count
+        this.buildPipeline();
+
+        console.log('SimpleGrassRenderer: Pipeline initialized');
+    }
+
+    /**
+     * Set MSAA sample count and rebuild pipeline if needed
+     */
+    public setSampleCount(count: number): void {
+        if (count !== this.sampleCount) {
+            this.sampleCount = count;
+            if (this.pipeline) this.buildPipeline();
+        }
+    }
+
+    /**
+     * Set color format and rebuild pipeline if needed
+     */
+    public setColorFormat(format: GPUTextureFormat): void {
+        if (format !== this.colorFormat) {
+            this.colorFormat = format;
+            if (this.pipeline) this.buildPipeline();
+        }
+    }
+
+    private buildPipeline(): void {
         // Load shader
         const shaderCode = this.getShaderCode();
         const shaderModule = this.device.createShaderModule({
@@ -70,7 +101,6 @@ export class SimpleGrassRenderer {
             code: shaderCode,
         });
 
-        // Create pipeline
         this.pipeline = this.device.createRenderPipeline({
             label: 'Simple Grass Pipeline',
             layout: this.device.createPipelineLayout({
@@ -80,24 +110,22 @@ export class SimpleGrassRenderer {
                 module: shaderModule,
                 entryPoint: 'vs_main',
                 buffers: [
-                    // Vertex buffer
                     {
-                        arrayStride: 32, // position(12) + normal(12) + color(8) = 32 bytes
+                        arrayStride: 32,
                         attributes: [
-                            { format: 'float32x3', offset: 0, shaderLocation: 0 }, // position
-                            { format: 'float32x3', offset: 12, shaderLocation: 1 }, // normal
-                            { format: 'float32x2', offset: 24, shaderLocation: 2 }, // uv
+                            { format: 'float32x3', offset: 0, shaderLocation: 0 },
+                            { format: 'float32x3', offset: 12, shaderLocation: 1 },
+                            { format: 'float32x2', offset: 24, shaderLocation: 2 },
                         ],
                     },
-                    // Instance buffer
                     {
                         arrayStride: 32,
                         stepMode: 'instance',
                         attributes: [
-                            { format: 'float32x3', offset: 0, shaderLocation: 3 }, // instance position
-                            { format: 'float32', offset: 12, shaderLocation: 4 }, // scale
-                            { format: 'float32', offset: 16, shaderLocation: 5 }, // rotation
-                            { format: 'float32', offset: 20, shaderLocation: 6 }, // color variation
+                            { format: 'float32x3', offset: 0, shaderLocation: 3 },
+                            { format: 'float32', offset: 12, shaderLocation: 4 },
+                            { format: 'float32', offset: 16, shaderLocation: 5 },
+                            { format: 'float32', offset: 20, shaderLocation: 6 },
                         ],
                     },
                 ],
@@ -107,7 +135,7 @@ export class SimpleGrassRenderer {
                 entryPoint: 'fs_main',
                 targets: [
                     {
-                        format: navigator.gpu.getPreferredCanvasFormat(),
+                        format: this.colorFormat,
                         blend: {
                             color: {
                                 srcFactor: 'src-alpha',
@@ -125,20 +153,18 @@ export class SimpleGrassRenderer {
             },
             primitive: {
                 topology: 'triangle-list',
-                cullMode: 'none', // No culling for grass blades
+                cullMode: 'none',
                 frontFace: 'ccw',
             },
             depthStencil: {
-                depthWriteEnabled: false, // Grass doesn't write depth for better blending
+                depthWriteEnabled: false,
                 depthCompare: 'less',
                 format: 'depth24plus',
             },
             multisample: {
-                count: 4,
+                count: Math.max(1, this.sampleCount),
             },
         });
-
-        console.log('SimpleGrassRenderer: Pipeline initialized');
     }
 
     /**
